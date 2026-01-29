@@ -253,16 +253,25 @@
         /* Timer */
         #timer {
             display: none;
+            flex-direction: column;
             align-items: center;
             justify-content: center;
             width: 100vw;
             height: 100vh;
             background-size: cover;
             background-position: center;
+            gap: 6vh;
         }
 
         #timer.active {
             display: flex;
+        }
+
+        .timer-logo {
+            max-width: 20vw;
+            max-height: 15vh;
+            object-fit: contain;
+            filter: drop-shadow(0 4px 20px rgba(0,0,0,0.3));
         }
 
         .timer-display {
@@ -399,12 +408,24 @@
                 </div>
             </div>
 
+            <!-- Logo -->
+            <div class="section">
+                <div class="section-title">Logo (Optional)</div>
+                <div class="background-options">
+                    <label class="photo-upload" for="logo-input">
+                        <span id="logo-label">🎨 Upload Logo</span>
+                        <input type="file" id="logo-input" accept="image/*">
+                    </label>
+                </div>
+            </div>
+
             <button class="start-button">Start Timer</button>
         </div>
     </div>
 
     <!-- Timer -->
     <div id="timer">
+        <img id="timer-logo" class="timer-logo" style="display: none;" alt="Logo">
         <div class="timer-display">00:00:00</div>
         <div class="timer-controls">
             <button class="control-btn" id="back-btn" title="Back to settings">⬅</button>
@@ -419,6 +440,7 @@
         let selectedBackgroundType = 'color';
         let selectedFont = 'sans';
         let photoData = null;
+        let logoData = null;
 
         // Check URL params
         const urlParams = new URLSearchParams(window.location.search);
@@ -432,6 +454,13 @@
         }
 
         function initSettings() {
+            // Check for logo in localStorage
+            const savedLogo = localStorage.getItem('timerLogo');
+            if (savedLogo) {
+                logoData = savedLogo;
+                document.getElementById('logo-label').textContent = '✓ Logo Uploaded';
+            }
+
             // Restore settings from URL if returning from timer
             if (urlParams.has('time')) {
                 const savedTime = parseInt(urlParams.get('time'));
@@ -559,7 +588,7 @@
             // Photo upload
             const photoInput = document.getElementById('photo-input');
             const photoLabel = document.getElementById('photo-label');
-            
+
             photoInput.addEventListener('change', function(e) {
                 const file = e.target.files[0];
                 if (file) {
@@ -568,10 +597,27 @@
                         photoData = event.target.result;
                         selectedBackground = photoData;
                         selectedBackgroundType = 'photo';
-                        
+
                         document.querySelectorAll('.color-option').forEach(o => o.classList.remove('active'));
                         document.querySelector('.photo-upload').classList.add('active');
                         photoLabel.textContent = '✓ Photo Uploaded';
+                    };
+                    reader.readAsDataURL(file);
+                }
+            });
+
+            // Logo upload
+            const logoInput = document.getElementById('logo-input');
+            const logoLabel = document.getElementById('logo-label');
+
+            logoInput.addEventListener('change', function(e) {
+                const file = e.target.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = function(event) {
+                        logoData = event.target.result;
+                        localStorage.setItem('timerLogo', logoData);
+                        logoLabel.textContent = '✓ Logo Uploaded';
                     };
                     reader.readAsDataURL(file);
                 }
@@ -622,6 +668,16 @@
             document.getElementById('settings').style.display = 'none';
             const timerEl = document.getElementById('timer');
             timerEl.classList.add('active');
+
+            // Set logo if available
+            const logoData = localStorage.getItem('timerLogo');
+            const logoEl = document.getElementById('timer-logo');
+            if (logoData) {
+                logoEl.src = logoData;
+                logoEl.style.display = 'block';
+            } else {
+                logoEl.style.display = 'none';
+            }
 
             // Set background
             if (bgType === 'color') {
