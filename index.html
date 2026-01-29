@@ -480,10 +480,17 @@
                         }
                     });
                 } else {
-                    // Photo background
-                    photoData = savedBg;
-                    document.querySelector('.photo-upload').classList.add('active');
-                    document.getElementById('photo-label').textContent = '✓ Photo Uploaded';
+                    // Photo background - load from localStorage
+                    photoData = localStorage.getItem('timerPhoto');
+                    if (photoData) {
+                        selectedBackground = photoData;
+                        document.querySelector('.photo-upload').classList.add('active');
+                        document.getElementById('photo-label').textContent = '✓ Photo Uploaded';
+                    } else {
+                        // Fallback to default color if photo not found
+                        selectedBackgroundType = 'color';
+                        document.querySelector('.color-option[data-color="#1a1a2e"]').classList.add('active');
+                    }
                 }
 
                 // Restore font
@@ -537,12 +544,13 @@
                     document.querySelectorAll('.color-option').forEach(o => o.classList.remove('active'));
                     document.querySelector('.photo-upload').classList.remove('active');
                     this.classList.add('active');
-                    
+
                     selectedBackground = this.dataset.color;
                     selectedBackgroundType = 'color';
-                    
+
                     // Reset photo data and label when switching to color
                     photoData = null;
+                    localStorage.removeItem('timerPhoto');
                     document.getElementById('photo-label').textContent = '📷 Upload Photo';
                     document.getElementById('photo-input').value = '';
                 });
@@ -594,7 +602,9 @@
                 if (selectedBackgroundType === 'color') {
                     params.set('bg', selectedBackground);
                 } else {
-                    params.set('bg', selectedBackground);
+                    // For photos, store in localStorage and use default color in URL
+                    localStorage.setItem('timerPhoto', selectedBackground);
+                    params.set('bg', '#1a1a2e'); // Default color
                 }
 
                 // Don't include 'edit' parameter when starting timer
@@ -617,7 +627,14 @@
             if (bgType === 'color') {
                 timerEl.style.backgroundColor = bg;
             } else {
-                timerEl.style.backgroundImage = `url(${bg})`;
+                // Load photo from localStorage
+                const photoData = localStorage.getItem('timerPhoto');
+                if (photoData) {
+                    timerEl.style.backgroundImage = `url(${photoData})`;
+                } else {
+                    // Fallback to color if photo not found
+                    timerEl.style.backgroundColor = bg;
+                }
             }
 
             // Set font and text color based on background brightness
